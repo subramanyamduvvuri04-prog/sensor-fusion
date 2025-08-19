@@ -1,0 +1,4 @@
+../Core/Src/lsm6ds3.c:11:9:LSM6DS3_ReadID	1
+../Core/Src/lsm6ds3.c:17:6:LSM6DS3_Init	1
+../Core/Src/lsm6ds3.c:29:6:LSM6DS3_ReadAccel	1
+../Core/Src/lsm6ds3.c:37:6:LSM6DS3_ReadGyro	1
