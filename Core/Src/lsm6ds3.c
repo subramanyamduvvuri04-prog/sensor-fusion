@@ -10,7 +10,7 @@
 
 uint8_t LSM6DS3_ReadID(I2C_HandleTypeDef *hi2c) {
     uint8_t id;
-    HAL_I2C_Mem_Read(hi2c, LSM6DS3_ADDR, LSM6DS3_WHO_AM_I, 1, &id, 1, HAL_MAX_DELAY);
+    HAL_I2C_Mem_Read(hi2c, LSM6DS3_ADDR, 0X0F, I2C_MEMADD_SIZE_8BIT, &id, 1, HAL_MAX_DELAY);
     return id;
 }
 
