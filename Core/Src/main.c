@@ -22,7 +22,7 @@ int main(void) {
     uint8_t id = LSM6DS3_ReadID(&hi2c1);
     char msg[64];
 
-    if (id == 0x69) {
+    if (id == 0x6A) {
         sprintf(msg, "LSM6DS3 detected ✅ WHO_AM_I = 0x%02X\r\n", id);
     } else {
         sprintf(msg, "LSM6DS3 not detected ❌ WHO_AM_I = 0x%02X\r\n", id);

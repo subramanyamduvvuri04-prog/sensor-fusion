@@ -671,9 +671,9 @@ int main(void) {
  800076a:	f887 304f 	strb.w	r3, [r7, #79]	@ 0x4f
     char msg[64];
 
-    if (id == 0x69) {
+    if (id == 0x6A) {
  800076e:	f897 304f 	ldrb.w	r3, [r7, #79]	@ 0x4f
- 8000772:	2b69      	cmp	r3, #105	@ 0x69
+ 8000772:	2b6a      	cmp	r3, #106	@ 0x6a
  8000774:	d108      	bne.n	8000788 <main+0x40>
         sprintf(msg, "LSM6DS3 detected ✅ WHO_AM_I = 0x%02X\r\n", id);
  8000776:	f897 204f 	ldrb.w	r2, [r7, #79]	@ 0x4f
