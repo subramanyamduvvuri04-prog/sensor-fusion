@@ -1,9 +1,11 @@
 #include "main.h"
+#include "lsm6ds3.h"
 #include <string.h>
 #include <stdio.h>
 
-I2C_HandleTypeDef hi2c1;
-UART_HandleTypeDef huart2;
+ UART_HandleTypeDef huart2;
+ I2C_HandleTypeDef hi2c1;
+
 //MPU6050_t mpu;
 char msg[128];
 
@@ -12,16 +14,21 @@ static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_USART2_UART_Init(void);
 
+void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c) {
+    if (hi2c->Instance == I2C1) {
+        imu_data_ready = 1;
+    }
+}
+
 int main(void) {
     HAL_Init();
     SystemClock_Config();
+
     MX_GPIO_Init();
     MX_I2C1_Init();
-    MX_USART2_UART_Init(); // For printf via UART
+    MX_USART2_UART_Init();
 
     uint8_t id = LSM6DS3_ReadID(&hi2c1);
-    char msg[64];
-
     if (id == 0x6A) {
         sprintf(msg, "LSM6DS3 detected ✅ WHO_AM_I = 0x%02X\r\n", id);
     } else {
@@ -31,16 +38,25 @@ int main(void) {
 
     LSM6DS3_Init(&hi2c1);
 
-    int16_t ax, ay, az, gx, gy, gz;
-
     while (1) {
-        LSM6DS3_ReadAccel(&hi2c1, &ax, &ay, &az);
-        LSM6DS3_ReadGyro(&hi2c1, &gx, &gy, &gz);
+        LSM6DS3_ReadNonBlocking();
 
-        sprintf(msg, "Accel: X=%d Y=%d Z=%d | Gyro: X=%d Y=%d Z=%d\r\n", ax, ay, az, gx, gy, gz);
+        while (!imu_data_ready); // wait for interrupt
+        imu_data_ready = 0;
+
+        int16_t gx = (int16_t)(rx_buffer[1] << 8 | rx_buffer[0]);
+        int16_t gy = (int16_t)(rx_buffer[3] << 8 | rx_buffer[2]);
+        int16_t gz = (int16_t)(rx_buffer[5] << 8 | rx_buffer[4]);
+
+        int16_t ax = (int16_t)(rx_buffer[7] << 8 | rx_buffer[6]);
+        int16_t ay = (int16_t)(rx_buffer[9] << 8 | rx_buffer[8]);
+        int16_t az = (int16_t)(rx_buffer[11] << 8 | rx_buffer[10]);
+
+        sprintf(msg, "Accel: X=%d Y=%d Z=%d | Gyro: X=%d Y=%d Z=%d\r\n",
+                ax, ay, az, gx, gy, gz);
         HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
 
-        HAL_Delay(500);
+        HAL_Delay(100); // Optional
     }
 }
 /**
@@ -119,6 +135,12 @@ static void MX_I2C1_Init(void)
   {
     Error_Handler();
   }
+
+  HAL_NVIC_SetPriority(I2C1_EV_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(I2C1_EV_IRQn);
+
+  HAL_NVIC_SetPriority(I2C1_ER_IRQn, 0, 1);
+  HAL_NVIC_EnableIRQ(I2C1_ER_IRQn);
   /* USER CODE BEGIN I2C1_Init 2 */
 
   /* USER CODE END I2C1_Init 2 */

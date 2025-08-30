@@ -7,37 +7,32 @@
 
 
 #include "lsm6ds3.h"
+uint8_t rx_buffer[12];
+I2C_HandleTypeDef *i2c_lsm6 = NULL;
+volatile uint8_t imu_data_ready = 0;
+
+void LSM6DS3_Init(I2C_HandleTypeDef *hi2c) {
+    i2c_lsm6 = hi2c;
+
+    uint8_t ctrl1 = 0x60; // ODR = 416Hz, FS = 2g
+    HAL_I2C_Mem_Write(hi2c, LSM6DS3_ADDR, LSM6DS3_CTRL1_XL,
+                      I2C_MEMADD_SIZE_8BIT, &ctrl1, 1, HAL_MAX_DELAY);
+
+    uint8_t ctrl2 = 0x60; // ODR = 416Hz, FS = 2000 dps
+    HAL_I2C_Mem_Write(hi2c, LSM6DS3_ADDR, LSM6DS3_CTRL2_G,
+                      I2C_MEMADD_SIZE_8BIT, &ctrl2, 1, HAL_MAX_DELAY);
+}
 
 uint8_t LSM6DS3_ReadID(I2C_HandleTypeDef *hi2c) {
     uint8_t id;
-    HAL_I2C_Mem_Read(hi2c, LSM6DS3_ADDR, LSM6DS3_WHO_AM_I, 1, &id, 1, HAL_MAX_DELAY);
+    HAL_I2C_Mem_Read(hi2c, LSM6DS3_ADDR, LSM6DS3_WHO_AM_I,
+                     I2C_MEMADD_SIZE_8BIT, &id, 1, HAL_MAX_DELAY);
     return id;
 }
 
-void LSM6DS3_Init(I2C_HandleTypeDef *hi2c) {
-    uint8_t data;
-
-    // Enable accelerometer: 104 Hz, 2g, BW = 50 Hz
-    data = 0x40;
-    HAL_I2C_Mem_Write(hi2c, LSM6DS3_ADDR, LSM6DS3_CTRL1_XL, 1, &data, 1, HAL_MAX_DELAY);
-
-    // Enable gyroscope: 104 Hz, 245 dps
-    data = 0x40;
-    HAL_I2C_Mem_Write(hi2c, LSM6DS3_ADDR, LSM6DS3_CTRL2_G, 1, &data, 1, HAL_MAX_DELAY);
-}
-
-void LSM6DS3_ReadAccel(I2C_HandleTypeDef *hi2c, int16_t *ax, int16_t *ay, int16_t *az) {
-    uint8_t buffer[6];
-    HAL_I2C_Mem_Read(hi2c, LSM6DS3_ADDR, LSM6DS3_OUTX_L_XL, 1, buffer, 6, HAL_MAX_DELAY);
-    *ax = (int16_t)(buffer[1] << 8 | buffer[0]);
-    *ay = (int16_t)(buffer[3] << 8 | buffer[2]);
-    *az = (int16_t)(buffer[5] << 8 | buffer[4]);
-}
-
-void LSM6DS3_ReadGyro(I2C_HandleTypeDef *hi2c, int16_t *gx, int16_t *gy, int16_t *gz) {
-    uint8_t buffer[6];
-    HAL_I2C_Mem_Read(hi2c, LSM6DS3_ADDR, LSM6DS3_OUTX_L_G, 1, buffer, 6, HAL_MAX_DELAY);
-    *gx = (int16_t)(buffer[1] << 8 | buffer[0]);
-    *gy = (int16_t)(buffer[3] << 8 | buffer[2]);
-    *gz = (int16_t)(buffer[5] << 8 | buffer[4]);
+void LSM6DS3_ReadNonBlocking(void) {
+    imu_data_ready = 0;
+    HAL_I2C_Mem_Read_IT(i2c_lsm6, LSM6DS3_ADDR,
+                        LSM6DS3_OUTX_L_G, I2C_MEMADD_SIZE_8BIT,
+                        rx_buffer, 12);
 }
