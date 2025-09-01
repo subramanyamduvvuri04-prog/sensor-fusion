@@ -56,7 +56,7 @@ int main(void) {
                 ax, ay, az, gx, gy, gz);
         HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
 
-        HAL_Delay(100); // Optional
+        HAL_Delay(1000); // Optional
     }
 }
 /**
