@@ -21,7 +21,7 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c) {
 }
 
 int main(void) {
-    HAL_Init();
+    HAL_Init() ;
     SystemClock_Config();
 
     MX_GPIO_Init();
